@@ -1,18 +1,18 @@
 """
-Agent with Typed Input and Output - Full Type Safety
-=====================================================
-This example shows how to define both input and output schemas for your agent.
-You get end-to-end type safety: validate what goes in, guarantee what comes out.
+带类型化输入输出的 Agent - 完整类型安全
+======================================
+此示例展示了如何为 Agent 定义输入和输出 schema。
+你获得端到端类型安全：验证输入、保证输出。
 
-Perfect for building robust pipelines where you need contracts on both ends.
-The agent validates inputs and guarantees output structure.
+非常适合构建健壮的管道，需要两端都有契约。
+Agent 验证输入并保证输出结构。
 
-Key concepts:
-- input_schema: A Pydantic model defining what the agent accepts
-- output_schema: A Pydantic model defining what the agent returns
-- Pass input as a dict or Pydantic model — both work
+关键概念：
+- input_schema：定义 Agent 接受内容的 Pydantic 模型
+- output_schema：定义 Agent 返回内容的 Pydantic 模型
+- 传入 dict 或 Pydantic 模型 —— 两者都有效
 
-Example inputs to try:
+可以尝试的示例输入：
 - {"ticker": "NVDA", "analysis_type": "quick", "include_risks": True}
 - {"ticker": "TSLA", "analysis_type": "deep", "include_risks": True}
 """
@@ -26,77 +26,77 @@ from agno.tools.yfinance import YFinanceTools
 from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------
-# Storage Configuration
+# 存储配置
 # ---------------------------------------------------------------------------
 agent_db = SqliteDb(db_file="tmp/agents.db")
 
 
 # ---------------------------------------------------------------------------
-# Input Schema — what the agent accepts
+# 输入 Schema —— Agent 接受的内容
 # ---------------------------------------------------------------------------
 class AnalysisRequest(BaseModel):
-    """Structured input for requesting a stock analysis."""
+    """请求股票分析的结构化输入。"""
 
-    ticker: str = Field(..., description="Stock ticker symbol (e.g., NVDA, AAPL)")
+    ticker: str = Field(..., description="股票代码符号（例如：NVDA, AAPL）")
     analysis_type: Literal["quick", "deep"] = Field(
         default="quick",
-        description="quick = summary only, deep = full analysis with drivers/risks",
+        description="quick = 仅总结，deep = 包含驱动因素/风险的完整分析",
     )
     include_risks: bool = Field(
-        default=True, description="Whether to include risk analysis"
+        default=True, description="是否包含风险分析"
     )
 
 
 # ---------------------------------------------------------------------------
-# Output Schema — what the agent returns
+# 输出 Schema —— Agent 返回的内容
 # ---------------------------------------------------------------------------
 class StockAnalysis(BaseModel):
-    """Structured output for stock analysis."""
+    """股票分析的结构化输出。"""
 
-    ticker: str = Field(..., description="Stock ticker symbol")
-    company_name: str = Field(..., description="Full company name")
-    current_price: float = Field(..., description="Current stock price in USD")
-    summary: str = Field(..., description="One-line summary of the stock")
+    ticker: str = Field(..., description="股票代码符号")
+    company_name: str = Field(..., description="完整公司名称")
+    current_price: float = Field(..., description="当前股价（美元）")
+    summary: str = Field(..., description="一句话股票总结")
     key_drivers: Optional[List[str]] = Field(
-        None, description="Key growth drivers (if deep analysis)"
+        None, description="关键增长驱动因素（如深度分析）"
     )
     key_risks: Optional[List[str]] = Field(
-        None, description="Key risks (if include_risks=True)"
+        None, description="关键风险（如 include_risks=True）"
     )
     recommendation: str = Field(
-        ..., description="One of: Strong Buy, Buy, Hold, Sell, Strong Sell"
+        ..., description="以下之一：强力买入、买入、持有、卖出、强力卖出"
     )
 
 
 # ---------------------------------------------------------------------------
-# Agent Instructions
+# Agent 指令
 # ---------------------------------------------------------------------------
 instructions = """\
-You are a Finance Agent that produces structured stock analyses.
+你是一个生成结构化股票分析的金融 Agent。
 
-## Input Parameters
+## 输入参数
 
-You receive structured requests with:
-- ticker: The stock to analyze
-- analysis_type: "quick" (summary only) or "deep" (full analysis)
-- include_risks: Whether to include risk analysis
+你接收包含以下内容的结构化请求：
+- ticker：要分析的股票
+- analysis_type："quick"（仅总结）或 "deep"（完整分析）
+- include_risks：是否包含风险分析
 
-## Workflow
+## 工作流程
 
-1. Fetch data for the requested ticker
-2. If analysis_type is "deep", identify key drivers
-3. If include_risks is True, identify key risks
-4. Provide a clear recommendation
+1. 获取请求股票的数据
+2. 如果 analysis_type 是 "deep"，识别关键驱动因素
+3. 如果 include_risks 为 True，识别关键风险
+4. 提供明确的推荐
 
-## Rules
+## 规则
 
-- Source: Yahoo Finance
-- Match output to input parameters — don't include drivers for "quick" analysis
-- Recommendation must be one of: Strong Buy, Buy, Hold, Sell, Strong Sell\
+- 数据来源：Yahoo Finance
+- 输出匹配输入参数 —— "quick" 分析不包含驱动因素
+- 推荐必须是以下之一：强力买入、买入、持有、卖出、强力卖出\
 """
 
 # ---------------------------------------------------------------------------
-# Create the Agent
+# 创建 Agent
 # ---------------------------------------------------------------------------
 agent_with_typed_input_output = Agent(
     name="Agent with Typed Input Output",
@@ -113,10 +113,10 @@ agent_with_typed_input_output = Agent(
 )
 
 # ---------------------------------------------------------------------------
-# Run the Agent
+# 运行 Agent
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    # Option 1: Pass input as a dict
+    # 方式 1：以 dict 传入输入
     response_1 = agent_with_typed_input_output.run(
         input={
             "ticker": "NVDA",
@@ -125,26 +125,26 @@ if __name__ == "__main__":
         }
     )
 
-    # Access the typed output
+    # 访问类型化输出
     analysis_1: StockAnalysis = response_1.content
 
     print(f"\n{'=' * 60}")
-    print(f"Stock Analysis: {analysis_1.company_name} ({analysis_1.ticker})")
+    print(f"股票分析：{analysis_1.company_name} ({analysis_1.ticker})")
     print(f"{'=' * 60}")
-    print(f"Price: ${analysis_1.current_price:.2f}")
-    print(f"Summary: {analysis_1.summary}")
+    print(f"价格：${analysis_1.current_price:.2f}")
+    print(f"总结：{analysis_1.summary}")
     if analysis_1.key_drivers:
-        print("\nKey Drivers:")
+        print("\n关键驱动因素：")
         for driver in analysis_1.key_drivers:
             print(f"  • {driver}")
     if analysis_1.key_risks:
-        print("\nKey Risks:")
+        print("\n关键风险：")
         for risk in analysis_1.key_risks:
             print(f"  • {risk}")
-    print(f"\nRecommendation: {analysis_1.recommendation}")
+    print(f"\n推荐：{analysis_1.recommendation}")
     print(f"{'=' * 60}\n")
 
-    # Option 2: Pass input as a Pydantic model
+    # 方式 2：以 Pydantic 模型传入输入
     request = AnalysisRequest(
         ticker="AAPL",
         analysis_type="quick",
@@ -152,37 +152,37 @@ if __name__ == "__main__":
     )
     response_2 = agent_with_typed_input_output.run(input=request)
 
-    # Access the typed output
+    # 访问类型化输出
     analysis_2: StockAnalysis = response_2.content
 
     print(f"\n{'=' * 60}")
-    print(f"Stock Analysis: {analysis_2.company_name} ({analysis_2.ticker})")
+    print(f"股票分析：{analysis_2.company_name} ({analysis_2.ticker})")
     print(f"{'=' * 60}")
-    print(f"Price: ${analysis_2.current_price:.2f}")
-    print(f"Summary: {analysis_2.summary}")
+    print(f"价格：${analysis_2.current_price:.2f}")
+    print(f"总结：{analysis_2.summary}")
     if analysis_2.key_drivers:
-        print("\nKey Drivers:")
+        print("\n关键驱动因素：")
         for driver in analysis_2.key_drivers:
             print(f"  • {driver}")
     if analysis_2.key_risks:
-        print("\nKey Risks:")
+        print("\n关键风险：")
         for risk in analysis_2.key_risks:
             print(f"  • {risk}")
-    print(f"\nRecommendation: {analysis_2.recommendation}")
+    print(f"\n推荐：{analysis_2.recommendation}")
     print(f"{'=' * 60}\n")
 
 # ---------------------------------------------------------------------------
-# More Examples
+# 更多示例
 # ---------------------------------------------------------------------------
 """
-Typed input + output is perfect for:
+类型化输入 + 输出非常适合：
 
-1. API endpoints
+1. API 端点
    @app.post("/analyze")
    def analyze(request: AnalysisRequest) -> StockAnalysis:
        return agent.run(input=request).content
 
-2. Batch processing
+2. 批量处理
    requests = [
        AnalysisRequest(ticker="NVDA", analysis_type="quick"),
        AnalysisRequest(ticker="AMD", analysis_type="quick"),
@@ -190,10 +190,10 @@ Typed input + output is perfect for:
    ]
    results = [agent.run(input=r).content for r in requests]
 
-3. Pipeline composition
-   # Agent 1 outputs what Agent 2 expects as input
+3. 管道组合
+   # Agent 1 的输出是 Agent 2 期望的输入
    screening_result = screener_agent.run(input=criteria).content
    analysis_result = analysis_agent.run(input=screening_result).content
 
-Type safety on both ends = fewer bugs, better tooling, clearer contracts.
+两端类型安全 = 更少错误、更好工具支持、更清晰契约。
 """

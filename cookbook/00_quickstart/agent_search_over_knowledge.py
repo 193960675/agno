@@ -1,17 +1,17 @@
 """
-Agentic Search over Knowledge - Agent with a Knowledge Base
-============================================================
-This example shows how to give an agent a searchable knowledge base.
-The agent can search through documents (PDFs, text, URLs) to answer questions.
+知识库上的智能搜索 - 带知识库的 Agent
+====================================
+此示例展示了如何为 Agent 提供可搜索的知识库。
+Agent 可以搜索文档（PDF、文本、URL）来回答问题。
 
-Key concepts:
-- Knowledge: A searchable collection of documents (PDFs, text, URLs)
-- Agentic search: The agent decides when to search the knowledge base
-- Hybrid search: Combines semantic similarity with keyword matching.
+关键概念：
+- Knowledge：可搜索的文档集合（PDF、文本、URL）
+- 智能搜索：Agent 决定何时搜索知识库
+- 混合搜索：结合语义相似性和关键词匹配。
 
-Example prompts to try:
-- "What is Agno?"
-- "What is the AgentOS?"
+可以尝试的示例提示：
+- "Agno 是什么？"
+- "AgentOS 是什么？"
 """
 
 from agno.agent import Agent
@@ -23,7 +23,7 @@ from agno.vectordb.chroma import ChromaDb
 from agno.vectordb.search import SearchType
 
 # ---------------------------------------------------------------------------
-# Setup
+# 配置
 # ---------------------------------------------------------------------------
 agent_db = SqliteDb(db_file="tmp/agents.db")
 
@@ -34,51 +34,51 @@ knowledge = Knowledge(
         collection="agno_docs",
         path="tmp/chromadb",
         persistent_client=True,
-        # Enable hybrid search - combines vector similarity with keyword matching using RRF
+        # 启用混合搜索 - 使用 RRF 结合向量相似性和关键词匹配
         search_type=SearchType.hybrid,
-        # RRF (Reciprocal Rank Fusion) constant - controls ranking smoothness.
-        # Higher values (e.g., 60) give more weight to lower-ranked results,
-        # Lower values make top results more dominant. Default is 60 (per original RRF paper).
+        # RRF (Reciprocal Rank Fusion) 常数 - 控制排名平滑度。
+        # 较高值（如 60）给予较低排名结果更多权重，
+        # 较低值使顶级结果更占主导。默认为 60（根据原始 RRF 论文）。
         hybrid_rrf_k=60,
         embedder=GeminiEmbedder(id="gemini-embedding-001"),
     ),
-    # Return 5 results on query
+    # 查询时返回 5 个结果
     max_results=5,
-    # Store metadata about the contents in the agent database, table_name="agno_knowledge"
+    # 在 agent 数据库中存储内容的元数据，table_name="agno_knowledge"
     contents_db=agent_db,
 )
 
 # ---------------------------------------------------------------------------
-# Agent Instructions
+# Agent 指令
 # ---------------------------------------------------------------------------
 instructions = """\
-You are an expert on the Agno framework and building AI agents.
+你是 Agno 框架和构建 AI Agent 的专家。
 
-## Workflow
+## 工作流程
 
-1. Search
-   - For questions about Agno, always search your knowledge base first
-   - Extract key concepts from the query to search effectively
+1. 搜索
+   - 关于 Agno 的问题，始终先搜索知识库
+   - 从查询中提取关键概念以有效搜索
 
-2. Synthesize
-   - Combine information from multiple search results
-   - Prioritize official documentation over general knowledge
+2. 综合
+   - 结合多个搜索结果的信息
+   - 优先官方文档而非通用知识
 
-3. Present
-   - Lead with a direct answer
-   - Include code examples when helpful
-   - Keep it practical and actionable
+3. 呈现
+   - 以直接答案开头
+   - 有帮助时包含代码示例
+   - 保持实用和可操作
 
-## Rules
+## 规则
 
-- Always search knowledge before answering Agno questions
-- If the answer isn't in the knowledge base, say so
-- Include code snippets for implementation questions
-- Be concise — developers want answers, not essays\
+- 回答 Agno 问题前始终搜索知识库
+- 如果答案不在知识库中，说明这一点
+- 实现问题包含代码片段
+- 保持简洁 —— 开发者想要答案，不是长文\
 """
 
 # ---------------------------------------------------------------------------
-# Create Agent
+# 创建 Agent
 # ---------------------------------------------------------------------------
 agent_with_knowledge = Agent(
     name="Agent with Knowledge",
@@ -94,39 +94,39 @@ agent_with_knowledge = Agent(
 )
 
 # ---------------------------------------------------------------------------
-# Run Agent
+# 运行 Agent
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    # Load the introduction from the Agno documentation into the knowledge base
-    # We're only loading 1 file to keep this example simple.
+    # 将 Agno 文档的介绍加载到知识库
+    # 我们只加载 1 个文件来保持示例简单。
     knowledge.insert(
         name="Agno Introduction", url="https://docs.agno.com/introduction.md"
     )
 
     agent_with_knowledge.print_response(
-        "What is Agno?",
+        "Agno 是什么？",
         stream=True,
     )
 
 # ---------------------------------------------------------------------------
-# More Examples
+# 更多示例
 # ---------------------------------------------------------------------------
 """
-Load your own knowledge:
+加载自己的知识：
 
-1. From a URL
+1. 从 URL
    knowledge.insert(url="https://example.com/docs.pdf")
 
-2. From a local file
+2. 从本地文件
    knowledge.insert(path="path/to/document.pdf")
 
-3. From text directly
-   knowledge.insert(text_content="Your content here...")
+3. 直接从文本
+   knowledge.insert(text_content="你的内容在这里...")
 
-Hybrid search combines:
-- Semantic search: Finds conceptually similar content
-- Keyword search: Finds exact term matches
-- Results fused using Reciprocal Rank Fusion (RRF)
+混合搜索结合：
+- 语义搜索：找到概念上相似的内容
+- 关键词搜索：找到精确词语匹配
+- 结果使用 Reciprocal Rank Fusion (RRF) 融合
 
-The agent automatically searches when relevant (agentic search).
+Agent 在相关时自动搜索（智能搜索）。
 """

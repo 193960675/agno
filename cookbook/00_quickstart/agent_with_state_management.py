@@ -1,22 +1,22 @@
 """
-Agent with State Management - Finance Agent with Watchlist
-===========================================================
-This example shows how to give your agent persistent state that it can
-read and modify. The agent maintains a stock watchlist across conversations.
+带状态管理的 Agent - 有自选列表的金融 Agent
+==========================================
+此示例展示了如何为 Agent 提供可读写修改的持久化状态。
+Agent 能够跨对话维护股票自选列表。
 
-Different from storage (conversation history) and memory (user preferences),
-state is structured data the agent actively manages: counters, lists, flags.
+与存储（对话历史）和记忆（用户偏好）不同，
+状态是 Agent 主动管理的结构化数据：计数器、列表、标志。
 
-Key concepts:
-- session_state: A dict that persists across runs
-- Tools can read/write state via run_context.session_state
-- State variables can be injected into instructions with {variable_name}
+关键概念：
+- session_state：跨运行持久化的字典
+- 工具可通过 run_context.session_state 读/写状态
+- 状态变量可通过 {variable_name} 注入到指令中
 
-Example prompts to try:
-- "Add NVDA and AMD to my watchlist"
-- "What's on my watchlist?"
-- "Remove AMD from the list"
-- "How are my watched stocks doing today?"
+可以尝试的示例提示：
+- "将 NVDA 和 AMD 加入我的自选列表"
+- "我的自选列表里有什么？"
+- "从列表中移除 AMD"
+- "我的自选股票今天表现如何？"
 """
 
 from agno.agent import Agent
@@ -26,88 +26,88 @@ from agno.run import RunContext
 from agno.tools.yfinance import YFinanceTools
 
 # ---------------------------------------------------------------------------
-# Storage Configuration
+# 存储配置
 # ---------------------------------------------------------------------------
 agent_db = SqliteDb(db_file="tmp/agents.db")
 
 
 # ---------------------------------------------------------------------------
-# Custom Tools that Modify State
+# 修改状态的自定义工具
 # ---------------------------------------------------------------------------
 def add_to_watchlist(run_context: RunContext, ticker: str) -> str:
     """
-    Add a stock ticker to the watchlist.
+    将股票代码添加到自选列表。
 
-    Args:
-        ticker: Stock ticker symbol (e.g., NVDA, AAPL)
+    参数：
+        ticker: 股票代码符号（例如：NVDA, AAPL）
 
-    Returns:
-        Confirmation message
+    返回：
+        确认消息
     """
     ticker = ticker.upper().strip()
     watchlist = run_context.session_state.get("watchlist", [])
 
     if ticker in watchlist:
-        return f"{ticker} is already on your watchlist"
+        return f"{ticker} 已在你的自选列表中"
 
     watchlist.append(ticker)
     run_context.session_state["watchlist"] = watchlist
 
-    return f"Added {ticker} to watchlist. Current watchlist: {', '.join(watchlist)}"
+    return f"已将 {ticker} 加入自选列表。当前自选列表：{', '.join(watchlist)}"
 
 
 def remove_from_watchlist(run_context: RunContext, ticker: str) -> str:
     """
-    Remove a stock ticker from the watchlist.
+    从自选列表中移除股票代码。
 
-    Args:
-        ticker: Stock ticker symbol to remove
+    参数：
+        ticker: 要移除的股票代码符号
 
-    Returns:
-        Confirmation message
+    返回：
+        确认消息
     """
     ticker = ticker.upper().strip()
     watchlist = run_context.session_state.get("watchlist", [])
 
     if ticker not in watchlist:
-        return f"{ticker} is not on your watchlist"
+        return f"{ticker} 不在你的自选列表中"
 
     watchlist.remove(ticker)
     run_context.session_state["watchlist"] = watchlist
 
     if watchlist:
-        return f"Removed {ticker}. Remaining watchlist: {', '.join(watchlist)}"
-    return f"Removed {ticker}. Watchlist is now empty."
+        return f"已移除 {ticker}。剩余自选列表：{', '.join(watchlist)}"
+    return f"已移除 {ticker}。自选列表现在为空。"
 
 
 # ---------------------------------------------------------------------------
-# Agent Instructions
+# Agent 指令
 # ---------------------------------------------------------------------------
 instructions = """\
-You are a Finance Agent that manages a stock watchlist.
+你是一个管理股票自选列表的金融 Agent。
 
-## Current Watchlist
+## 当前自选列表
 {watchlist}
 
-## Capabilities
+## 能力
 
-1. Manage watchlist
-   - Add stocks: use add_to_watchlist tool
-   - Remove stocks: use remove_from_watchlist tool
+1. 管理自选列表
+   - 添加股票：使用 add_to_watchlist 工具
+   - 移除股票：使用 remove_from_watchlist 工具
 
-2. Get stock data
-   - Use YFinance tools to fetch prices and metrics for watched stocks
-   - Compare stocks on the watchlist
+2. 获取股票数据
+   - 使用 YFinance 工具获取自选股票的价格和指标
+   - 比较自选列表中的股票
 
-## Rules
+## 规则
 
-- Always confirm watchlist changes
-- When asked about "my stocks" or "watchlist", refer to the current state
-- Fetch fresh data when reporting on watchlist performance\
+- 始终确认自选列表的变更
+- 当被问到"我的股票"或"自选列表"时，参考当前状态
+- 报告自选列表表现时获取最新数据\
 """
 
 # ---------------------------------------------------------------------------
-# Create the Agent
+# 创建 Agent
 # ---------------------------------------------------------------------------
 agent_with_state_management = Agent(
     name="Agent with State Management",
@@ -128,48 +128,48 @@ agent_with_state_management = Agent(
 )
 
 # ---------------------------------------------------------------------------
-# Run the Agent
+# 运行 Agent
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    # Add some stocks
+    # 添加一些股票
     agent_with_state_management.print_response(
-        "Add NVDA, AAPL, and GOOGL to my watchlist",
+        "将 NVDA、AAPL 和 GOOGL 加入我的自选列表",
         stream=True,
     )
 
-    # Check the watchlist
+    # 查看自选列表
     agent_with_state_management.print_response(
-        "How are my watched stocks doing today?",
+        "我的自选股票今天表现如何？",
         stream=True,
     )
 
-    # View the state directly
+    # 直接查看状态
     print("\n" + "=" * 60)
-    print("Session State:")
+    print("会话状态：")
     print(
-        f"  Watchlist: {agent_with_state_management.get_session_state().get('watchlist', [])}"
+        f"  自选列表: {agent_with_state_management.get_session_state().get('watchlist', [])}"
     )
     print("=" * 60)
 
 # ---------------------------------------------------------------------------
-# More Examples
+# 更多示例
 # ---------------------------------------------------------------------------
 """
-State vs Storage vs Memory:
+状态 vs 存储 vs 记忆：
 
-- State: Structured data the agent manages (watchlist, counters, flags)
-- Storage: Conversation history ("what did we discuss?")
-- Memory: User preferences ("what do I like?")
+- 状态：Agent 管理的结构化数据（自选列表、计数器、标志）
+- 存储：对话历史（"我们讨论了什么？")
+- 记忆：用户偏好（"我喜欢什么？")
 
-State is perfect for:
-- Tracking items (watchlists, todos, carts)
-- Counters and progress
-- Multi-step workflows
-- Any structured data that changes during conversation
+状态适用于：
+- 跟踪项目（自选列表、待办事项、购物车）
+- 计数器和进度
+- 多步骤工作流
+- 任何在对话中变化的结构化数据
 
-Accessing state:
+访问状态的方式：
 
-1. In tools: run_context.session_state["key"]
-2. In instructions: {key} (with add_session_state_to_context=True)
-3. After run: agent.get_session_state() or response.session_state
+1. 在工具中：run_context.session_state["key"]
+2. 在指令中：{key}（需设置 add_session_state_to_context=True）
+3. 运行后：agent.get_session_state() 或 response.session_state
 """

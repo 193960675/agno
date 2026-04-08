@@ -1,21 +1,21 @@
 """
-Custom Tool for Self-Learning - Write Your Own Tools
-=====================================================
-This example shows how to write custom tools for your agent.
-A tool is just a Python function — the agent calls it when needed.
+自定义工具用于自学习 - 编写自己的工具
+======================================
+此示例展示了如何为 Agent 编写自定义工具。
+工具只是一个 Python 函数 —— Agent 在需要时调用它。
 
-We'll build a self-learning agent that can save insights to a knowledge base.
-The key concept: any function can become a tool.
+我们将构建一个可以保存洞察到知识库的自学习 Agent。
+关键概念：任何函数都可以成为工具。
 
-Key concepts:
-- Tools are Python functions with docstrings (the docstring tells the agent what the tool does)
-- The agent decides when to call your tool based on the conversation
-- Return a string to communicate results back to the agent
+关键概念：
+- 工具是带有 docstring 的 Python 函数（docstring 告知 Agent 工具做什么）
+- Agent 根据对话决定何时调用你的工具
+- 返回字符串将结果传达给 Agent
 
-Example prompts to try:
-- "What's a good P/E ratio for tech stocks? Save that insight."
-- "Remember that NVDA's data center revenue is the key growth driver"
-- "What learnings do we have saved?"
+可以尝试的示例提示：
+- "科技股的良好 P/E 比率是多少？保存那个洞察。"
+- "记住 NVDA 的数据中心收入是关键增长驱动因素"
+- "我们保存了什么学习内容？"
 """
 
 import json
@@ -32,12 +32,12 @@ from agno.vectordb.chroma import ChromaDb
 from agno.vectordb.search import SearchType
 
 # ---------------------------------------------------------------------------
-# Storage Configuration
+# 存储配置
 # ---------------------------------------------------------------------------
 agent_db = SqliteDb(db_file="tmp/agents.db")
 
 # ---------------------------------------------------------------------------
-# Knowledge Base for Learnings
+# 学习内容的知识库
 # ---------------------------------------------------------------------------
 learnings_kb = Knowledge(
     name="Agent Learnings",
@@ -56,33 +56,33 @@ learnings_kb = Knowledge(
 
 
 # ---------------------------------------------------------------------------
-# Custom Tool: Save Learning
+# 自定义工具：保存学习内容
 # ---------------------------------------------------------------------------
 def save_learning(title: str, learning: str) -> str:
     """
-    Save a reusable insight to the knowledge base for future reference.
+    将可复用的洞察保存到知识库以供将来参考。
 
-    Args:
-        title: Short descriptive title (e.g., "Tech stock P/E benchmarks")
-        learning: The insight to save — be specific and actionable
+    参数：
+        title: 简短描述性标题（例如："科技股 P/E 基准")
+        learning: 要保存的洞察 —— 具体且可操作
 
-    Returns:
-        Confirmation message
+    返回：
+        确认消息
     """
-    # Validate inputs
+    # 验证输入
     if not title or not title.strip():
-        return "Cannot save: title is required"
+        return "无法保存：标题必填"
     if not learning or not learning.strip():
-        return "Cannot save: learning content is required"
+        return "无法保存：学习内容必填"
 
-    # Build the payload
+    # 构建数据
     payload = {
         "title": title.strip(),
         "learning": learning.strip(),
         "saved_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    # Save to knowledge base
+    # 保存到知识库
     learnings_kb.insert(
         name=payload["title"],
         text_content=json.dumps(payload, ensure_ascii=False),
@@ -90,56 +90,56 @@ def save_learning(title: str, learning: str) -> str:
         skip_if_exists=True,
     )
 
-    return f"Saved: '{title}'"
+    return f"已保存：'{title}'"
 
 
 # ---------------------------------------------------------------------------
-# Agent Instructions
+# Agent 指令
 # ---------------------------------------------------------------------------
 instructions = """\
-You are a Finance Agent that learns and improves over time.
+你是一个能够学习和改进的金融 Agent。
 
-You have two special abilities:
-1. Search your knowledge base for previously saved learnings
-2. Save new insights using the save_learning tool
+你有两项特殊能力：
+1. 搜索知识库查找之前保存的学习内容
+2. 使用 save_learning 工具保存新的洞察
 
-## Workflow
+## 工作流程
 
-1. Check Knowledge First
-   - Before answering, search for relevant prior learnings
-   - Apply any relevant insights to your response
+1. 首先检查知识库
+   - 回答前，搜索相关的先前学习内容
+   - 将相关洞察应用到你的响应中
 
-2. Gather Information
-   - Use YFinance tools for market data
-   - Combine with your knowledge base insights
+2. 收集信息
+   - 使用 YFinance 工具获取市场数据
+   - 结合知识库洞察
 
-3. Propose Learnings
-   - After answering, consider: is there a reusable insight here?
-   - If yes, propose it in this format:
+3. 提议学习内容
+   - 回答后，考虑：是否有可复用的洞察？
+   - 如果有，用此格式提议：
 
 ---
-**Proposed Learning**
+**提议的学习内容**
 
-Title: [concise title]
-Learning: [the insight — specific and actionable]
+标题：[简洁标题]
+学习：[洞察 —— 具体且可操作]
 
-Save this? (yes/no)
+保存吗？（是/否）
 ---
 
-- Only call save_learning AFTER the user says "yes"
-- If user says "no", acknowledge and move on
+- 只有在用户说"是"后才调用 save_learning
+- 如果用户说"否"，确认并继续
 
-## What Makes a Good Learning
+## 什么是好的学习内容
 
-- Specific: "Tech P/E ratios typically range 20-35x" not "P/E varies"
-- Actionable: Can be applied to future questions
-- Reusable: Useful beyond this one conversation
+- 具体："科技股 P/E 比率通常在 20-35x" 而非 "P/E 变化"
+- 可操作：可应用于未来问题
+- 可复用：超出此对话范围有用
 
-Don't save: Raw data, one-off facts, or obvious information.\
+不要保存：原始数据、一次性事实或显而易见的信息。\
 """
 
 # ---------------------------------------------------------------------------
-# Create the Agent
+# 创建 Agent
 # ---------------------------------------------------------------------------
 self_learning_agent = Agent(
     name="Self-Learning Agent",
@@ -147,7 +147,7 @@ self_learning_agent = Agent(
     instructions=instructions,
     tools=[
         YFinanceTools(all=True),
-        save_learning,  # Our custom tool — just a Python function!
+        save_learning,  # 我们的自定义工具 —— 就是一个 Python 函数！
     ],
     knowledge=learnings_kb,
     search_knowledge=True,
@@ -159,56 +159,56 @@ self_learning_agent = Agent(
 )
 
 # ---------------------------------------------------------------------------
-# Run the Agent
+# 运行 Agent
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    # Ask a question that might produce a learning
+    # 提问可能产生学习内容
     self_learning_agent.print_response(
-        "What's a healthy P/E ratio for tech stocks?",
+        "科技股的健康 P/E 比率是多少？",
         stream=True,
     )
 
-    # If the agent proposed a learning, approve it
+    # 如果 Agent 提议了学习内容，批准它
     self_learning_agent.print_response(
-        "yes",
+        "是",
         stream=True,
     )
 
-    # Later, the agent can recall the learning
+    # 之后，Agent 可以召回学习内容
     self_learning_agent.print_response(
-        "What learnings do we have saved?",
+        "我们保存了什么学习内容？",
         stream=True,
     )
 
 # ---------------------------------------------------------------------------
-# More Examples
+# 更多示例
 # ---------------------------------------------------------------------------
 """
-Writing custom tools:
+编写自定义工具：
 
-1. Define a function with type hints and a docstring
+1. 定义一个带类型提示和 docstring 的函数
    def my_tool(param: str) -> str:
-       '''Description of what this tool does.
+       '''描述此工具做什么。
 
-       Args:
-           param: What this parameter is for
+       参数：
+           param: 此参数的作用
 
-       Returns:
-           What the tool returns
+       返回：
+           工具返回什么
        '''
-       # Your logic here
-       return "Result"
+       # 你的逻辑
+       return "结果"
 
-2. Add it to the agent's tools list
+2. 添加到 Agent 的工具列表
    agent = Agent(
        tools=[my_tool],
        ...
    )
 
-The docstring is critical — it tells the agent:
-- What the tool does
-- What parameters it needs
-- What it returns
+docstring 是关键 —— 它告知 Agent：
+- 工具做什么
+- 需要什么参数
+- 返回什么
 
-The agent uses this to decide when and how to call your tool.
+Agent 使用这些信息决定何时及如何调用你的工具。
 """

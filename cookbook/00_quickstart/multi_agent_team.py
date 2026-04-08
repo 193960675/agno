@@ -1,25 +1,25 @@
 """
-Multi-Agent Team - Investment Research Team
-============================================
-This example shows how to create a team of agents that work together.
-Each agent has a specialized role, and the team leader coordinates.
+多智能体团队 - 投资研究团队
+==========================
+此示例展示了如何创建协同工作的 Agent 团队。
+每个 Agent 有专门的角色，团队领导者协调。
 
-We'll build an investment research team with opposing perspectives:
-- Bull Agent: Makes the case FOR investing
-- Bear Agent: Makes the case AGAINST investing
-- Lead Analyst: Synthesizes into a balanced recommendation
+我们将构建一个具有对立视角的投资研究团队：
+- 牛方 Agent：阐述投资的理由
+- 空方 Agent：阐述反对投资的理由
+- 主分析师：综合为平衡的推荐
 
-This adversarial approach produces better analysis than a single agent.
+这种对抗方法比单个 Agent 产生更好的分析。
 
-Key concepts:
-- Team: A group of agents coordinated by a leader
-- Members: Specialized agents with distinct roles
-- The leader delegates, synthesizes, and produces final output
+关键概念：
+- Team：由领导者协调的 Agent 组
+- Members：具有独特角色的专门 Agent
+- 领导者委派、综合并产生最终输出
 
-Example prompts to try:
-- "Should I invest in NVIDIA?"
-- "Analyze Tesla as a long-term investment"
-- "Is Apple overvalued right now?"
+可以尝试的示例提示：
+- "我应该投资 NVIDIA 吗？"
+- "分析特斯拉作为长期投资"
+- "Apple 目前是否估值过高？"
 """
 
 from agno.agent import Agent
@@ -29,28 +29,28 @@ from agno.team.team import Team
 from agno.tools.yfinance import YFinanceTools
 
 # ---------------------------------------------------------------------------
-# Storage Configuration
+# 存储配置
 # ---------------------------------------------------------------------------
 team_db = SqliteDb(db_file="tmp/agents.db")
 
 # ---------------------------------------------------------------------------
-# Bull Agent — Makes the Case FOR
+# 牛方 Agent —— 阐述投资的理由
 # ---------------------------------------------------------------------------
 bull_agent = Agent(
     name="Bull Analyst",
-    role="Make the investment case FOR a stock",
+    role="阐述股票的投资理由",
     model=Gemini(id="gemini-3-flash-preview"),
     tools=[YFinanceTools(all=True)],
     db=team_db,
     instructions="""\
-You are a bull analyst. Your job is to make the strongest possible case
-FOR investing in a stock. Find the positives:
-- Growth drivers and catalysts
-- Competitive advantages
-- Strong financials and metrics
-- Market opportunities
+你是牛方分析师。你的工作是尽可能有力地阐述
+投资某股票的理由。找到积极因素：
+- 增长驱动因素和催化剂
+- 竞争优势
+- 强劲的财务和指标
+- 市场机会
 
-Be persuasive but grounded in data. Use the tools to get real numbers.\
+要有说服力但基于数据。使用工具获取真实数字。\
 """,
     add_datetime_to_context=True,
     add_history_to_context=True,
@@ -58,23 +58,23 @@ Be persuasive but grounded in data. Use the tools to get real numbers.\
 )
 
 # ---------------------------------------------------------------------------
-# Bear Agent — Makes the Case AGAINST
+# 空方 Agent —— 阐述反对投资的理由
 # ---------------------------------------------------------------------------
 bear_agent = Agent(
     name="Bear Analyst",
-    role="Make the investment case AGAINST a stock",
+    role="阐述反对股票投资的理由",
     model=Gemini(id="gemini-3-flash-preview"),
     tools=[YFinanceTools(all=True)],
     db=team_db,
     instructions="""\
-You are a bear analyst. Your job is to make the strongest possible case
-AGAINST investing in a stock. Find the risks:
-- Valuation concerns
-- Competitive threats
-- Weak spots in financials
-- Market or macro risks
+你是空方分析师。你的工作是尽可能有力地阐述
+反对投资某股票的理由。找到风险：
+- 估值担忧
+- 竞争威胁
+- 财务薄弱点
+- 市场或宏观风险
 
-Be critical but fair. Use the tools to get real numbers to support your concerns.\
+要批判但公正。使用工具获取真实数字支持你的担忧。\
 """,
     add_datetime_to_context=True,
     add_history_to_context=True,
@@ -82,31 +82,31 @@ Be critical but fair. Use the tools to get real numbers to support your concerns
 )
 
 # ---------------------------------------------------------------------------
-# Create Team
+# 创建团队
 # ---------------------------------------------------------------------------
 multi_agent_team = Team(
     name="Multi-Agent Team",
     model=Gemini(id="gemini-3-flash-preview"),
     members=[bull_agent, bear_agent],
     instructions="""\
-You lead an investment research team with a Bull Analyst and Bear Analyst.
+你领导一个投资研究团队，包含牛方分析师和空方分析师。
 
-## Process
+## 流程
 
-1. Send the stock to BOTH analysts
-2. Let each make their case independently
-3. Synthesize their arguments into a balanced recommendation
+1. 将股票发送给两位分析师
+2. 让每位独立阐述理由
+3. 将他们的论点综合为平衡的推荐
 
-## Output Format
+## 输出格式
 
-After hearing from both analysts, provide:
-- **Bull Case Summary**: Key points from the bull analyst
-- **Bear Case Summary**: Key points from the bear analyst
-- **Synthesis**: Where do they agree? Where do they disagree?
-- **Recommendation**: Your balanced view (Buy/Hold/Sell) with confidence level
-- **Key Metrics**: A table of the important numbers
+听取两位分析师后，提供：
+- **牛方论点总结**：牛方分析师的关键观点
+- **空方论点总结**：空方分析师的关键观点
+- **综合**：他们在哪里同意？在哪里不同意？
+- **推荐**：你的平衡观点（买入/持有/卖出）及置信度
+- **关键指标**：重要数字的表格
 
-Be decisive but acknowledge uncertainty.\
+要果断但承认不确定性。\
 """,
     db=team_db,
     show_members_responses=True,
@@ -117,50 +117,50 @@ Be decisive but acknowledge uncertainty.\
 )
 
 # ---------------------------------------------------------------------------
-# Run Team
+# 运行团队
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    # First analysis
+    # 第一次分析
     multi_agent_team.print_response(
-        "Should I invest in NVIDIA (NVDA)?",
+        "我应该投资 NVIDIA (NVDA) 吗？",
         stream=True,
     )
 
-    # Follow-up question — team remembers the previous analysis
+    # 后续问题 —— 团队记住之前的分析
     multi_agent_team.print_response(
-        "How does AMD compare to that?",
+        "AMD 与之相比如何？",
         stream=True,
     )
 
 # ---------------------------------------------------------------------------
-# More Examples
+# 更多示例
 # ---------------------------------------------------------------------------
 """
-When to use Teams vs single Agent:
+何时使用团队 vs 单个 Agent：
 
-Single Agent:
-- One coherent task
-- No need for opposing views
-- Simpler is better
+单个 Agent：
+- 一个连贯的任务
+- 不需要对立观点
+- 简单更好
 
-Team:
-- Multiple perspectives needed
-- Specialized expertise
-- Complex tasks that benefit from division of labor
-- Adversarial reasoning (like this example)
+团队：
+- 需要多重视角
+- 专门专业知识
+- 情益于分工的复杂任务
+- 对对抗推理（如本示例）
 
-Other team patterns:
+其他团队模式：
 
-1. Research → Analysis → Writing pipeline
-   researcher = Agent(role="Gather information")
-   analyst = Agent(role="Analyze data")
-   writer = Agent(role="Write report")
+1. 研究 → 分析 → 写作管道
+   researcher = Agent(role="收集信息")
+   analyst = Agent(role="分析数据")
+   writer = Agent(role="撰写报告")
 
-2. Checker pattern
-   worker = Agent(role="Do the task")
-   checker = Agent(role="Verify the work")
+2. 检查者模式
+   worker = Agent(role="完成任务")
+   checker = Agent(role="验证工作")
 
-3. Specialist routing
-   classifier = Agent(role="Route to specialist")
+3. 专家路由
+   classifier = Agent(role="路由到专家")
    specialists = [finance_agent, legal_agent, tech_agent]
 """

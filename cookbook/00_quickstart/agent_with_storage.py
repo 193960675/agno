@@ -1,22 +1,22 @@
 """
-Agent with Storage - Finance Agent with Storage
-====================================================
-Building on the Finance Agent from 01, this example adds persistent storage.
-Your agent now remembers conversations across runs.
+带存储的 Agent - 有持久化存储的金融 Agent
+==========================================
+在 01 的金融 Agent 基础上，此示例添加了持久化存储。
+你的 Agent 现在能够跨运行记住对话。
 
-Ask about NVDA, close the script, come back later — pick up where you left off.
-The conversation history is saved to SQLite and restored automatically.
+询问 NVDA，关闭脚本，稍后回来 —— 从上次中断的地方继续。
+对话历史保存到 SQLite 并自动恢复。
 
-Key concepts:
-- Run: Each time you run the agent (via agent.print_response() or agent.run())
-- Session: A conversation thread, identified by session_id
-- Same session_id = continuous conversation, even across runs
+关键概念：
+- Run：每次运行 Agent（通过 agent.print_response() 或 agent.run()）
+- Session：对话线程，由 session_id 标识
+- 相同的 session_id = 连续对话，即使跨运行
 
-Example prompts to try:
-- "What's the current price of AAPL?"
-- "Compare that to Microsoft" (it remembers AAPL)
-- "Based on our discussion, which looks better?"
-- "What stocks have we analyzed so far?"
+可以尝试的示例提示：
+- "AAPL 的当前价格是多少？"
+- "与 Microsoft 比较"（它会记住 AAPL）
+- "根据我们的讨论，哪个看起来更好？"
+- "我们到目前为止分析了哪些股票？"
 """
 
 from agno.agent import Agent
@@ -25,48 +25,48 @@ from agno.models.google import Gemini
 from agno.tools.yfinance import YFinanceTools
 
 # ---------------------------------------------------------------------------
-# Storage Configuration
+# 存储配置
 # ---------------------------------------------------------------------------
 agent_db = SqliteDb(db_file="tmp/agents.db")
 
 # ---------------------------------------------------------------------------
-# Agent Instructions
+# Agent 指令
 # ---------------------------------------------------------------------------
 instructions = """\
-You are a Finance Agent — a data-driven analyst who retrieves market data,
-computes key ratios, and produces concise, decision-ready insights.
+你是一个金融 Agent —— 一个数据驱动的分析师，获取市场数据、
+计算关键比率，并生成简洁、可决策的洞察。
 
-## Workflow
+## 工作流程
 
-1. Clarify
-   - Identify tickers from company names (e.g., Apple → AAPL)
-   - If ambiguous, ask
+1. 明确需求
+   - 从公司名称识别股票代码（例如：Apple → AAPL）
+   - 如果有歧义，询问用户
 
-2. Retrieve
-   - Fetch: price, change %, market cap, P/E, EPS, 52-week range
-   - For comparisons, pull the same fields for each ticker
+2. 获取数据
+   - 获取：价格、涨跌幅、市值、P/E、EPS、52周区间
+   - 比较时，获取每个股票代码的相同字段
 
-3. Analyze
-   - Compute ratios (P/E, P/S, margins) when not already provided
-   - Key drivers and risks — 2-3 bullets max
-   - Facts only, no speculation
+3. 分析
+   - 当数据未提供时计算比率（P/E、P/S、利润率）
+   - 关键驱动因素和风险 —— 最多 2-3 点
+   - 只陈述事实，不猜测
 
-4. Present
-   - Lead with a one-line summary
-   - Use tables for multi-stock comparisons
-   - Keep it tight
+4. 呈现
+   - 以一句话总结开头
+   - 多股票比较时使用表格
+   - 保持简洁
 
-## Rules
+## 规则
 
-- Source: Yahoo Finance. Always note the timestamp.
-- Missing data? Say "N/A" and move on.
-- No personalized advice — add disclaimer when relevant.
-- No emojis.
-- Reference previous analyses when relevant.\
+- 数据来源：Yahoo Finance。始终注明时间戳。
+- 数据缺失？说 "N/A" 并继续。
+- 不提供个性化建议 —— 相关时添加免责声明。
+- 不使用表情符号。
+- 相关时引用之前的分析。\
 """
 
 # ---------------------------------------------------------------------------
-# Create the Agent
+# 创建 Agent
 # ---------------------------------------------------------------------------
 agent_with_storage = Agent(
     name="Agent with Storage",
@@ -81,45 +81,45 @@ agent_with_storage = Agent(
 )
 
 # ---------------------------------------------------------------------------
-# Run the Agent
+# 运行 Agent
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    # Use a consistent session_id to persist conversation across runs
-    # Note: session_id is auto-generated if not set
+    # 使用一致的 session_id 来跨运行持久化对话
+    # 注意：如果未设置，session_id 会自动生成
     session_id = "finance-agent-session"
 
-    # Turn 1: Analyze a stock
+    # 第一轮：分析一只股票
     agent_with_storage.print_response(
-        "Give me a quick investment brief on NVIDIA",
+        "给我一份 NVIDIA 的快速投资简报",
         session_id=session_id,
         stream=True,
     )
 
-    # Turn 2: Compare — the agent remembers NVDA from turn 1
+    # 第二轮：比较 —— Agent 记住了第一轮的 NVDA
     agent_with_storage.print_response(
-        "Compare that to Tesla",
+        "与特斯拉比较",
         session_id=session_id,
         stream=True,
     )
 
-    # Turn 3: Ask for a recommendation based on the full conversation
+    # 第三轮：根据完整对话请求推荐
     agent_with_storage.print_response(
-        "Based on our discussion, which looks like the better investment?",
+        "根据我们的讨论，哪个看起来是更好的投资？",
         session_id=session_id,
         stream=True,
     )
 
 # ---------------------------------------------------------------------------
-# More Examples
+# 更多示例
 # ---------------------------------------------------------------------------
 """
-Try this flow:
+尝试这个流程：
 
-1. Run the script — it analyzes NVDA, compares to TSLA, then recommends
-2. Comment out all three prompts above
-3. Add: agent.print_response("What about AMD?", session_id=session_id, stream=True)
-4. Run again — it remembers the full NVDA vs TSLA conversation
+1. 运行脚本 —— 它分析 NVDA，与 TSLA 比较，然后推荐
+2. 注释掉上面的三个提示
+3. 添加：agent.print_response("AMD 怎么样？", session_id=session_id, stream=True)
+4. 再次运行 —— 它记住完整的 NVDA vs TSLA 对话
 
-The storage layer persists your conversation history to SQLite.
-Restart the script anytime and pick up where you left off.
+存储层将你的对话历史持久化到 SQLite。
+随时重启脚本并从中断处继续。
 """

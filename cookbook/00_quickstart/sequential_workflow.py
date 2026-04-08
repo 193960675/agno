@@ -1,21 +1,21 @@
 """
-Sequential Workflow - Stock Research Pipeline
-==============================================
-This example shows how to create a workflow with sequential steps.
-Each step is handled by a specialized agent, and outputs flow to the next step.
+顺序工作流 - 股票研究管道
+========================
+此示例展示了如何创建带有顺序步骤的工作流。
+每个步骤由专门 Agent 处理，输出流向下一步。
 
-Different from Teams (agents collaborate dynamically), Workflows give you
-explicit control over execution order and data flow.
+与团队（Agent 动态协作）不同，工作流让你
+对执行顺序和数据流有明确的控制。
 
-Key concepts:
-- Workflow: Orchestrates a sequence of steps
-- Step: Wraps an agent with a specific task
-- Steps execute in order, each building on the previous
+关键概念：
+- Workflow：编排步骤序列
+- Step：用特定任务包装 Agent
+- 步骤按顺序执行，每步建立在前面基础上
 
-Example prompts to try:
-- "Analyze NVDA"
-- "Research Tesla for investment"
-- "Give me a report on Apple"
+可以尝试的示例提示：
+- "分析 NVDA"
+- "研究特斯拉用于投资"
+- "给我一份 Apple 的报告"
 """
 
 from agno.agent import Agent
@@ -25,28 +25,28 @@ from agno.tools.yfinance import YFinanceTools
 from agno.workflow import Step, Workflow
 
 # ---------------------------------------------------------------------------
-# Storage Configuration
+# 存储配置
 # ---------------------------------------------------------------------------
 workflow_db = SqliteDb(db_file="tmp/agents.db")
 
 # ---------------------------------------------------------------------------
-# Step 1: Data Gatherer — Fetches raw market data
+# 步骤 1：数据收集器 —— 获取原始市场数据
 # ---------------------------------------------------------------------------
 data_agent = Agent(
     name="Data Gatherer",
     model=Gemini(id="gemini-3-flash-preview"),
     tools=[YFinanceTools(all=True)],
     instructions="""\
-You are a data gathering agent. Your job is to fetch comprehensive market data.
+你是一个数据收集 Agent。你的工作是获取全面的市场数据。
 
-For the requested stock, gather:
-- Current price and daily change
-- Market cap and volume
-- P/E ratio, EPS, and other key ratios
-- 52-week high and low
-- Recent price trends
+对于请求的股票，收集：
+- 当前价格和日涨跌
+- 市值和成交量
+- P/E 比率、EPS 和其他关键比率
+- 52周最高和最低
+- 近期价格趋势
 
-Present the raw data clearly. Don't analyze — just gather and organize.\
+清晰地呈现原始数据。不要分析 —— 只收集和组织。\
 """,
     db=workflow_db,
     add_datetime_to_context=True,
@@ -57,25 +57,25 @@ Present the raw data clearly. Don't analyze — just gather and organize.\
 data_step = Step(
     name="Data Gathering",
     agent=data_agent,
-    description="Fetch comprehensive market data for the stock",
+    description="获取股票的全面市场数据",
 )
 
 # ---------------------------------------------------------------------------
-# Step 2: Analyst — Interprets the data
+# 步骤 2：分析师 —— 解释数据
 # ---------------------------------------------------------------------------
 analyst_agent = Agent(
     name="Analyst",
     model=Gemini(id="gemini-3-flash-preview"),
     instructions="""\
-You are a financial analyst. You receive raw market data from the data team.
+你是一个金融分析师。你接收数据团队的原始市场数据。
 
-Your job is to:
-- Interpret the key metrics (is the P/E high or low for this sector?)
-- Identify strengths and weaknesses
-- Note any red flags or positive signals
-- Compare to typical industry benchmarks
+你的工作是：
+- 解释关键指标（P/E 对于此行业是高还是低？）
+- 识别优势和劣势
+- 注意任何警示信号或积极信号
+- 与典型行业基准比较
 
-Provide analysis, not recommendations. Be objective and data-driven.\
+提供分析，而非推荐。要客观和数据驱动。\
 """,
     db=workflow_db,
     add_datetime_to_context=True,
@@ -86,26 +86,26 @@ Provide analysis, not recommendations. Be objective and data-driven.\
 analysis_step = Step(
     name="Analysis",
     agent=analyst_agent,
-    description="Analyze the market data and identify key insights",
+    description="分析市场数据并识别关键洞察",
 )
 
 # ---------------------------------------------------------------------------
-# Step 3: Report Writer — Produces final output
+# 步骤 3：报告撰写者 —— 产生最终输出
 # ---------------------------------------------------------------------------
 report_agent = Agent(
     name="Report Writer",
     model=Gemini(id="gemini-3-flash-preview"),
     instructions="""\
-You are a report writer. You receive analysis from the research team.
+你是一个报告撰写者。你接收研究团队的分析。
 
-Your job is to:
-- Synthesize the analysis into a clear investment brief
-- Lead with a one-line summary
-- Include a recommendation (Buy/Hold/Sell) with rationale
-- Keep it concise — max 200 words
-- End with key metrics in a small table
+你的工作是：
+- 将分析综合为清晰的投资简报
+- 以一句话总结开头
+- 包含推荐（买入/持有/卖出）及理由
+- 保持简洁 —— 最多 200 字
+- 结尾用小表格展示关键指标
 
-Write for a busy investor who wants the bottom line fast.\
+为忙碌的投资者撰写，他们想要快速看到结论。\
 """,
     db=workflow_db,
     add_datetime_to_context=True,
@@ -117,54 +117,54 @@ Write for a busy investor who wants the bottom line fast.\
 report_step = Step(
     name="Report Writing",
     agent=report_agent,
-    description="Produce a concise investment brief",
+    description="生成简洁的投资简报",
 )
 
 # ---------------------------------------------------------------------------
-# Create the Workflow
+# 创建工作流
 # ---------------------------------------------------------------------------
 sequential_workflow = Workflow(
     name="Sequential Workflow",
-    description="Three-step research pipeline: Data → Analysis → Report",
+    description="三步研究管道：数据 → 分析 → 报告",
     steps=[
-        data_step,  # Step 1: Gather data
-        analysis_step,  # Step 2: Analyze data
-        report_step,  # Step 3: Write report
+        data_step,  # 步骤 1：收集数据
+        analysis_step,  # 步骤 2：分析数据
+        report_step,  # 步骤 3：撰写报告
     ],
 )
 
 # ---------------------------------------------------------------------------
-# Run the Workflow
+# 运行工作流
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     sequential_workflow.print_response(
-        "Analyze NVIDIA (NVDA) for investment",
+        "分析 NVIDIA (NVDA) 用于投资",
         stream=True,
     )
 
 # ---------------------------------------------------------------------------
-# More Examples
+# 更多示例
 # ---------------------------------------------------------------------------
 """
-Workflow vs Team:
+工作流 vs 团队：
 
-- Workflow: Explicit step order, predictable execution, clear data flow
-- Team: Dynamic collaboration, leader decides who does what
+- 工作流：明确的步骤顺序、可预测执行、清晰数据流
+- 团队：动态协作、领导者决定谁做什么
 
-Use Workflow when:
-- Steps must happen in a specific order
-- Each step has a clear, specialized role
-- You want predictable, repeatable execution
-- Output from step N feeds into step N+1
+使用工作流当：
+- 步骤必须按特定顺序发生
+- 每步有清晰、专门的职责
+- 你想要可预测、可重复的执行
+- 步骤 N 的输出流入步骤 N+1
 
-Use Team when:
-- Agents need to collaborate dynamically
-- The leader should decide who to involve
-- Tasks benefit from back-and-forth discussion
+使用团队当：
+- Agent 需要动态协作
+- 领导者应该决定涉及谁
+- 任务受益于来回讨论
 
-Advanced workflow features (not shown here):
-- Parallel: Run steps concurrently
-- Condition: Run steps only if criteria met
-- Loop: Repeat steps until condition met
-- Router: Dynamically select which step to run
+高级工作流功能（未在此展示）：
+- Parallel：并行运行步骤
+- Condition：仅在满足条件时运行步骤
+- Loop：重复步骤直到条件满足
+- Router：动态选择运行哪个步骤
 """

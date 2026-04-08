@@ -1,6 +1,6 @@
 # CLAUDE.md — Agno
 
-Instructions for Claude Code when working on this codebase.
+Instructions for Claude Code when working with code in this repository.
 
 ---
 
@@ -9,6 +9,7 @@ Instructions for Claude Code when working on this codebase.
 ```
 .
 ├── libs/agno/agno/          # Core framework code
+├── libs/agno/tests/         # Unit tests (tests/unit/) and integration tests (tests/integration/)
 ├── cookbook/                # Examples, patterns and test cases (organized by topic)
 ├── scripts/                 # Development and build scripts
 ├── specs/                   # Design documents (symlinked, private)
@@ -136,7 +137,23 @@ Format:
 | Learning | `libs/agno/agno/learn/` |
 | Database adapters | `libs/agno/agno/db/` |
 | Vector databases | `libs/agno/agno/vectordb/` |
-| Tests | `libs/agno/tests/` |
+| AgentOS | `libs/agno/agno/os/` |
+| AgentOS interfaces | `libs/agno/agno/os/interfaces/` (A2A, AG-UI, Slack, Telegram, WhatsApp) |
+| Unit tests | `libs/agno/tests/unit/` |
+| Integration tests | `libs/agno/tests/integration/` |
+
+---
+
+## Model Types
+
+Agno supports two model paradigms:
+
+| Model Class | Use Case | Example |
+|-------------|----------|---------|
+| Chat models | Single-turn queries, tool calls | `OpenAIChat(id="gpt-4o")` |
+| Response models | Multi-turn conversations, built-in tools | `OpenAIResponses(id="gpt-4o")` |
+
+Chat models return text; Response models can use built-in tools like web search.
 
 ---
 
@@ -162,10 +179,28 @@ See `.cursorrules` for detailed patterns. Key rules:
 **Running tests:**
 ```bash
 source .venv/bin/activate
-pytest libs/agno/tests/
+
+# Run all unit tests
+pytest libs/agno/tests/unit/
+
+# Run all integration tests
+pytest libs/agno/tests/integration/
 
 # Run a specific test file
-pytest libs/agno/tests/unit/test_agent.py
+pytest libs/agno/tests/unit/agent/test_basic.py
+
+# Run tests with coverage
+./libs/agno/scripts/test.sh
+```
+
+**Agent execution methods:**
+```python
+# run() returns a RunOutput object (for programmatic use)
+output = agent.run("query")
+content = output.content
+
+# print_response() prints directly to console (for demos/cookbooks)
+agent.print_response("query", stream=True)
 ```
 
 ---

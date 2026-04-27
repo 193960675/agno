@@ -21,7 +21,7 @@
 
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
-from agno.models.google import Gemini
+# from agno.models.google import Gemini
 from agno.tools.yfinance import YFinanceTools
 
 # ---------------------------------------------------------------------------
@@ -68,9 +68,21 @@ instructions = """\
 # ---------------------------------------------------------------------------
 # 创建 Agent
 # ---------------------------------------------------------------------------
+
+import os
+from dotenv import load_dotenv
+
+from agno.models.deepseek import DeepSeek
+
+# Load environment variables from cookbook/.env
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+
+# Get the key from environment
+key = os.getenv("DEEPSEEK_API_KEY")
+
 agent_with_storage = Agent(
     name="Agent with Storage",
-    model=Gemini(id="gemini-3-flash-preview"),
+    model=DeepSeek(id="deepseek-chat", api_key=key),
     instructions=instructions,
     tools=[YFinanceTools(all=True)],
     db=agent_db,

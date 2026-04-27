@@ -17,14 +17,16 @@
 - "给我一份特斯拉的报告"
 - "Apple 的投资理由是什么？"
 """
-
+import os
 from typing import List, Optional
+# from dotenv import load_dotenv
 
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
-from agno.models.google import Gemini
 from agno.tools.yfinance import YFinanceTools
 from pydantic import BaseModel, Field
+
+from libs.agno.agno.models.deepseek.deepseek import DeepSeek
 
 # ---------------------------------------------------------------------------
 # 存储配置
@@ -85,9 +87,17 @@ instructions = """\
 # ---------------------------------------------------------------------------
 # 创建 Agent
 # ---------------------------------------------------------------------------
+from dotenv import load_dotenv
+
+# Load environment variables from cookbook/.env
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+
+# Get the key from environment
+key = os.getenv("DEEPSEEK_API_KEY")
+
 agent_with_structured_output = Agent(
     name="Agent with Structured Output",
-    model=Gemini(id="gemini-3-flash-preview"),
+    model=DeepSeek(id="deepseek-chat", api_key=key),
     instructions=instructions,
     tools=[YFinanceTools(all=True)],
     output_schema=StockAnalysis,

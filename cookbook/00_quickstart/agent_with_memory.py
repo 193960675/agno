@@ -22,7 +22,6 @@ Agent 能够在所有对话中记住关于你的信息。
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.memory import MemoryManager
-from agno.models.google import Gemini
 from agno.tools.yfinance import YFinanceTools
 from rich.pretty import pprint
 
@@ -34,8 +33,22 @@ agent_db = SqliteDb(db_file="tmp/agents.db")
 # ---------------------------------------------------------------------------
 # 记忆管理器配置
 # ---------------------------------------------------------------------------
+
+import os
+from dotenv import load_dotenv
+
+from agno.models.deepseek import DeepSeek
+
+# Load environment variables from cookbook/.env
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+
+# Get the key from environment
+key = os.getenv("DEEPSEEK_API_KEY")
+
+
+
 memory_manager = MemoryManager(
-    model=Gemini(id="gemini-3-flash-preview"),
+    model=DeepSeek(id="deepseek-chat", api_key=key),
     db=agent_db,
     additional_instructions="""
     捕获用户喜欢的股票、他们的风险承受能力和投资目标。
@@ -87,7 +100,7 @@ user_id = "investor@example.com"
 
 agent_with_memory = Agent(
     name="Agent with Memory",
-    model=Gemini(id="gemini-3-flash-preview"),
+    model=DeepSeek(id="deepseek-chat", api_key=key),
     instructions=instructions,
     tools=[YFinanceTools(all=True)],
     db=agent_db,

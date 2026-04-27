@@ -16,16 +16,26 @@ Agent 可以搜索文档（PDF、文本、URL）来回答问题。
 
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
-from agno.knowledge.embedder.google import GeminiEmbedder
 from agno.knowledge.knowledge import Knowledge
-from agno.models.google import Gemini
 from agno.vectordb.chroma import ChromaDb
 from agno.vectordb.search import SearchType
+
+from agno.knowledge.embedder.ollama import OllamaEmbedder
 
 # ---------------------------------------------------------------------------
 # 配置
 # ---------------------------------------------------------------------------
 agent_db = SqliteDb(db_file="tmp/agents.db")
+
+embeddings = OllamaEmbedder(id="bge-m3", host="http://127.0.0.1:11434", dimensions=1024)
+
+# a = embeddings.get_embedding("The quick brown fox jumps over the lazy dog.")
+#
+# print(f"Embedding : {a}")
+#
+# # Print the embeddings and their dimensions
+# print(f"Embeddings: {a[:5]}")
+# print(f"Dimensions: {len(a)}")
 
 knowledge = Knowledge(
     name="Agno Documentation",
@@ -40,7 +50,7 @@ knowledge = Knowledge(
         # 较高值（如 60）给予较低排名结果更多权重，
         # 较低值使顶级结果更占主导。默认为 60（根据原始 RRF 论文）。
         hybrid_rrf_k=60,
-        embedder=GeminiEmbedder(id="gemini-embedding-001"),
+        embedder=embeddings
     ),
     # 查询时返回 5 个结果
     max_results=5,
@@ -77,12 +87,29 @@ instructions = """\
 - 保持简洁 —— 开发者想要答案，不是长文\
 """
 
+instructions2 = '''
+
+
+'''
+
 # ---------------------------------------------------------------------------
 # 创建 Agent
 # ---------------------------------------------------------------------------
+
+import os
+from dotenv import load_dotenv
+
+from agno.models.deepseek import DeepSeek
+
+# Load environment variables from cookbook/.env
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+
+# Get the key from environment
+key = os.getenv("DEEPSEEK_API_KEY")
+
 agent_with_knowledge = Agent(
     name="Agent with Knowledge",
-    model=Gemini(id="gemini-3-flash-preview"),
+    model=DeepSeek(id="deepseek-chat", api_key=key),
     instructions=instructions,
     knowledge=knowledge,
     search_knowledge=True,
@@ -102,9 +129,13 @@ if __name__ == "__main__":
     knowledge.insert(
         name="Agno Introduction", url="https://docs.agno.com/introduction.md"
     )
-
+    knowledge.insert(name = '信息安规',path = r"C:\Users\ww193\Desktop\345-所属班组-信息类班组（外包）.xlsx")
+    contents, count = knowledge.get_content()
+    print(f"\n知识库中共有 {count} 个内容项:")
+    for content in contents:
+        print(f"  - {content.name} (ID: {content.id}, Status: {content.status})")
     agent_with_knowledge.print_response(
-        "Agno 是什么？",
+        "工作许可人的安全职责包括确认工作票上所填安全措施是否正确完备。",
         stream=True,
     )
 

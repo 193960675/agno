@@ -8,6 +8,7 @@ dependencies = [
     "agno>=2.6.1",
     "chromadb>=1.5.8",
     "dotenv>=0.9.9",
+    "fastapi>=0.136.1",
     "ollama>=0.6.1",
     "openai>=2.30.0",
     "openpyxl>=3.1.5",

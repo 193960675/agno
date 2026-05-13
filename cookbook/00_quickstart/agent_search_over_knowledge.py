@@ -29,13 +29,13 @@ agent_db = SqliteDb(db_file="tmp/agents.db")
 
 embeddings = OllamaEmbedder(id="bge-m3", host="http://127.0.0.1:11434", dimensions=1024)
 
-# a = embeddings.get_embedding("The quick brown fox jumps over the lazy dog.")
-#
-# print(f"Embedding : {a}")
-#
-# # Print the embeddings and their dimensions
-# print(f"Embeddings: {a[:5]}")
-# print(f"Dimensions: {len(a)}")
+a = embeddings.get_embedding("The quick brown fox jumps over the lazy dog.")
+
+print(f"Embedding : {a}")
+
+# Print the embeddings and their dimensions
+print(f"Embeddings: {a[:5]}")
+print(f"Dimensions: {len(a)}")
 
 knowledge = Knowledge(
     name="Agno Documentation",
@@ -126,9 +126,7 @@ agent_with_knowledge = Agent(
 if __name__ == "__main__":
     # 将 Agno 文档的介绍加载到知识库
     # 我们只加载 1 个文件来保持示例简单。
-    knowledge.insert(
-        name="Agno Introduction", url="https://docs.agno.com/introduction.md"
-    )
+    # knowledge.insert(name="Agno Introduction", url="https://docs.agno.com/introduction.md")
     knowledge.insert(name = '信息安规',path = r"C:\Users\ww193\Desktop\345-所属班组-信息类班组（外包）.xlsx")
     contents, count = knowledge.get_content()
     print(f"\n知识库中共有 {count} 个内容项:")
